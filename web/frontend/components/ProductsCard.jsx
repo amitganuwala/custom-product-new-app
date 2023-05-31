@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Card, TextContainer, Text } from "@shopify/polaris";
 import { Toast } from "@shopify/app-bridge-react";
 import { useAppQuery, useAuthenticatedFetch } from "../hooks";
+import React, { useEffect } from "react";
+import "../assets/css/style.css";
 
 export function ProductsCard() {
   const emptyToastProps = { content: null };
@@ -15,12 +17,8 @@ export function ProductsCard() {
     isLoading: isLoadingCount,
     isRefetching: isRefetchingCount,
   } = useAppQuery({
-    url: "/api/products/count",
-    reactQueryOptions: {
-      onSuccess: () => {
-        setIsLoading(false);
-      },
-    },
+    url: "/api/products/all",
+    
   });
 
   const toastMarkup = toastProps.content && !isRefetchingCount && (
@@ -42,32 +40,30 @@ export function ProductsCard() {
       });
     }
   };
+  useEffect(() => {
+    listPopulate();
+  },[])
+  
+  const listPopulate = async () => {
+    const title = document.getElementById('product');
+    const response = await refetchProductCount();
+    var productlist = [];
+    productlist = response.data;
+    const itm = productlist.data;
+    const itmjson = JSON.stringify(itm);
+    var items = JSON.parse(itmjson);  
+    // document.getElementById("datalistv").value = items;
+    for (var option of items ) {
+      const newOption = document.createElement("option");
+      newOption.value = option.id;
+      newOption.text = option.title;
+      title.appendChild(newOption);
+    }  
+  };
 
   return (
     <>
-      {toastMarkup}
-      <Card
-        title="Product Counter"
-        sectioned
-        primaryFooterAction={{
-          content: "Populate 5 products",
-          onAction: handlePopulate,
-          loading: isLoading,
-        }}
-      >
-        <TextContainer spacing="loose">
-          <p>
-            Sample products are created with a default title and price. You can
-            remove them at any time.
-          </p>
-          <Text as="h4" variant="headingMd">
-            TOTAL PRODUCTS
-            <Text variant="bodyMd" as="p" fontWeight="semibold">
-              {isLoadingCount ? "-" : data.count}
-            </Text>
-          </Text>
-        </TextContainer>
-      </Card>
+    
     </>
   );
 }
