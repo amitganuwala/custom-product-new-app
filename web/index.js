@@ -11,6 +11,8 @@ import GDPRWebhookHandlers from "./gdpr.js";
 import mysql from "mysql";
 import bodyParser from "body-parser";
 import cors from "cors";
+// const Shopify = require('shopify-api-node');
+
 
 // const PORT = parseInt(
 //   process.env.BACKEND_PORT || process.env.PORT || "3000",
@@ -35,6 +37,7 @@ const db = mysql.createConnection({
   password: "",
   database: "varientdb",
 });
+
 
 
 app.post("/varientdb", (req, res) => {
@@ -157,6 +160,43 @@ app.get("/api/products/all", async (_req, res) => {
   });
   // res.status(200).send(productlist);
   return res.json(productlist);
+});
+
+
+app.post("/varientdb", (req, res) => {
+  const sql = "INSERT INTO subproducts (`product_id`,`product`,`subproductname`,`addprice`) VALUES (?)";
+  const values = [
+    req.body.product_id,
+    req.body.productname,
+    req.body.subproductname,
+    req.body.addprice
+  ]
+  db.query(sql, [values], (err, data) => {
+    if(err) {
+        return res.json("Error");
+    }
+    return res.json(data);
+})
+})
+
+app.post("/variants/create", async (_req, res) => {
+  let status = 200;
+  let error = null;
+  const variant = new shopify.api.rest.Variant({ session: res.locals.shopify.session });
+  variant.product_id = 632910392;
+  variant.option1 = "Yellow";
+  variant.price = "1.00";
+  
+  try {
+    await variant.save({
+      update: true,
+    });
+  } catch (e) {
+    console.log(`Failed to process products/create: ${e.message}`);
+    status = 500;
+    error = e.message;
+  }
+  res.status(status).send({ success: status === 200, error });
 });
 
 app.get("/api/products/count", async (_req, res) => {
